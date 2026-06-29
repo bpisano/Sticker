@@ -9,6 +9,7 @@
 import SwiftUI
 import CoreMotion
 
+@available(iOS 17, *)
 public struct AccelerometerStickerMotionEffect: StickerMotionEffect {
     let intensity: Double
     let maxRotation: Angle
@@ -45,6 +46,7 @@ public struct AccelerometerStickerMotionEffect: StickerMotionEffect {
     }
 }
 
+@available(iOS 17, *)
 public extension StickerMotionEffect where Self == AccelerometerStickerMotionEffect {
     static var accelerometer: Self {
         .accelerometer()

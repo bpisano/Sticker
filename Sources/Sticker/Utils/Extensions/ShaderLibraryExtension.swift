@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@available(iOS 17, *)
 extension ShaderLibrary {
     static var moduleLibrary: ShaderLibrary { .bundle(.module) }
 
@@ -53,6 +54,7 @@ extension ShaderLibrary {
     }
 }
 
+@available(iOS 17, *)
 public extension ShaderLibrary {
     @available(iOS 18.0, macOS 15.0, visionOS 2.0, tvOS 18.0, watchOS 11.0, *)
     static func compileStickerShaders() async throws {

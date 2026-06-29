@@ -6,9 +6,7 @@
 //
 
 import SwiftUI
-import Observation
 
-@Observable
 final class StickerShaderUpdater {
     typealias ChangeHandler = (_ motion: StickerMotion) -> Void
 

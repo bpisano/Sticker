@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@available(iOS 17, *)
 private struct StickerEffectViewModifier: ViewModifier {
     @State private var motion: StickerMotion = .init()
 
@@ -73,7 +74,7 @@ private struct StickerEffectViewModifier: ViewModifier {
 extension View {
     @ViewBuilder
     public func stickerEffect(_ isEnabled: Bool = true) -> some View {
-        if isEnabled {
+        if isEnabled, #available(iOS 17, *) {
             modifier(StickerEffectViewModifier())
         } else {
             self
@@ -81,6 +82,7 @@ extension View {
     }
 }
 
+@available(iOS 17, *)
 #Preview {
     VStack {
         Circle()
