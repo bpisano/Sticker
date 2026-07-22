@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  AccelerometerStickerMotionEffect.swift
 //  Sticker
 //
 //  Created by Benjamin Pisano on 15/11/2024.
@@ -9,34 +9,46 @@
 import SwiftUI
 import CoreMotion
 
+/// A motion effect that rotates its content with the device attitude.
 public struct AccelerometerStickerMotionEffect: StickerMotionEffect {
     let intensity: Double
     let maxRotation: Angle
     let updateInterval: TimeInterval
 
-    @Environment(\.stickerShaderUpdater) private var shaderUpdater
+    @State private var rotation: Rotation?
 
+    @Environment(\.stickerMotionAnimation) private var animation
+
+    /// Rotates the content with the device attitude and publishes the motion to descendants.
+    /// - Parameter content: The view the effect modifies.
+    /// - Returns: The content rotated by the current motion, publishing that motion to descendants.
     public func body(content: Content) -> some View {
         content
             .withViewSize { view, size in
                 view
                     .withAccelerometer(updateInterval: updateInterval) { view, attitude in
-                        let xRotation: Double = diminishingRotation(for: attitude.roll * intensity)
-                        let yRotation: Double = diminishingRotation(for: attitude.pitch * intensity)
-
                         view
-                            .rotation3DEffect(.radians(xRotation), axis: (0, 1, 0))
-                            .rotation3DEffect(.radians(yRotation), axis: (-1, 0, 0))
-                            .onChange(of: attitude) { oldValue, newValue in
-                                shaderUpdater.update(
-                                    with: .init(
-                                        x: xRotation * size.width / 2,
-                                        y: yRotation * size.height / 2
+                            .rotation3DEffect(rotation?.x ?? .zero, axis: (0, 1, 0))
+                            .rotation3DEffect(rotation?.y ?? .zero, axis: (-1, 0, 0))
+                            .onChange(of: attitude) { _, _ in
+                                withAnimation(animation) {
+                                    rotation = .init(
+                                        x: .radians(diminishingRotation(for: attitude.roll * intensity)),
+                                        y: .radians(diminishingRotation(for: attitude.pitch * intensity))
                                     )
-                                )
+                                }
                             }
                     }
+                    .environment(\.stickerMotion, motion(in: size))
             }
+    }
+
+    private func motion(in size: CGSize) -> StickerMotion {
+        guard let rotation else { return .inactive }
+        return .active(
+            x: rotation.x.radians * size.width / 2,
+            y: rotation.y.radians * size.height / 2
+        )
     }
 
     private func diminishingRotation(for tilt: Double) -> Double {
@@ -45,11 +57,25 @@ public struct AccelerometerStickerMotionEffect: StickerMotionEffect {
     }
 }
 
+private extension AccelerometerStickerMotionEffect {
+    struct Rotation: Equatable {
+        let x: Angle
+        let y: Angle
+    }
+}
+
 public extension StickerMotionEffect where Self == AccelerometerStickerMotionEffect {
+    /// A motion effect that follows the device attitude with default parameters.
     static var accelerometer: Self {
         .accelerometer()
     }
 
+    /// A motion effect that follows the device attitude.
+    /// - Parameters:
+    ///   - intensity: The strength of the rotation applied to the device tilt.
+    ///   - maxRotation: The angle the rotation asymptotically approaches as the tilt grows.
+    ///   - updateInterval: The interval at which the device motion is sampled.
+    /// - Returns: An accelerometer motion effect.
     static func accelerometer(
         intensity: Double = 1,
         maxRotation: Angle = .degrees(90),

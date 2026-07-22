@@ -8,9 +8,7 @@
 import SwiftUI
 
 private struct StickerEffectViewModifier: ViewModifier {
-    @State private var motion: StickerMotion = .init()
-
-    @Environment(\.stickerMotionEffect) private var effect
+    @Environment(\.stickerMotion) private var motion
     @Environment(\.stickerScale) private var stickerScale
     @Environment(\.stickerColorIntensity) private var stickerColorIntensity
     @Environment(\.stickerContrast) private var stickerContrast
@@ -21,7 +19,7 @@ private struct StickerEffectViewModifier: ViewModifier {
     @Environment(\.stickerNoiseIntensity) private var stickerNoiseIntensity
     @Environment(\.stickerLightIntensity) private var stickerLightIntensity
     @Environment(\.stickerPattern) private var stickerPattern
-    
+
     func body(content: Content) -> some View {
         content
             .visualEffect { [motion, stickerLightIntensity] view, proxy in
@@ -63,16 +61,18 @@ private struct StickerEffectViewModifier: ViewModifier {
                     )
             }
             .mask(content)
-            .applyTransform(for: effect)
-            .onStickerShaderChange { motion in
-                self.motion = motion
-            }
     }
 }
 
-extension View {
+public extension View {
+    /// Applies a holographic sticker effect to this view.
+    ///
+    /// The effect reads the ``EnvironmentValues/stickerMotion`` environment value published by
+    /// the nearest ancestor `stickerMotionEffect(_:animation:)` to drive its shaders.
+    /// - Parameter isEnabled: Whether the effect is applied.
+    /// - Returns: A view with the sticker effect applied when enabled.
     @ViewBuilder
-    public func stickerEffect(_ isEnabled: Bool = true) -> some View {
+    func stickerEffect(_ isEnabled: Bool = true) -> some View {
         if isEnabled {
             modifier(StickerEffectViewModifier())
         } else {
@@ -81,7 +81,29 @@ extension View {
     }
 }
 
-#Preview {
+#Preview("Card") {
+    VStack(spacing: 20) {
+        Image(systemName: "applelogo")
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(height: 100)
+            .foregroundStyle(.white)
+        Text("Sticker")
+            .font(.title.bold())
+            .foregroundStyle(.black)
+    }
+    .padding(40)
+    .background {
+        RoundedRectangle(cornerRadius: 24)
+            .fill(.white)
+            .stickerEffect()
+    }
+    .stickerMotionEffect(.dragGesture)
+    .shadow(radius: 20)
+    .padding()
+}
+
+#Preview("Simple") {
     VStack {
         Circle()
             .fill(.white)
@@ -91,11 +113,8 @@ extension View {
                     .padding(2)
             }
             .frame(height: 30)
-            .animation(.snappy) { view in
-                view
-                    .stickerEffect()
-                    .stickerMotionEffect(.pointerHover)
-            }
+            .stickerEffect()
+            .stickerMotionEffect(.pointerHover)
             .shadow(radius: 20)
             .padding()
 
@@ -104,11 +123,8 @@ extension View {
             .aspectRatio(contentMode: .fit)
             .frame(height: 300)
             .foregroundStyle(.white)
-            .animation(.snappy) { view in
-                view
-                    .stickerEffect()
-                    .stickerMotionEffect(.dragGesture)
-            }
+            .stickerEffect()
+            .stickerMotionEffect(.dragGesture)
             .shadow(radius: 20)
             .padding()
     }

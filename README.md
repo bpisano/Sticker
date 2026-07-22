@@ -10,7 +10,7 @@ Add the following dependency to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/bpisano/sticker", .upToNextMajor(from: "1.3.0"))
+    .package(url: "https://github.com/bpisano/sticker", .upToNextMajor(from: "2.0.0"))
 ]
 ```
 
@@ -68,16 +68,40 @@ Image(.stickerIcon)
     .stickerMotionEffect(.pointerHover(intensity: 0.5))
 ```
 
-Using the `.animation` view modifier allows you to control the animation of the effect.
+Motion updates are animated with `.snappy` by default. Use the `animation` parameter to customize the animation.
 
 ```swift
 Image(.stickerIcon)
-    .animation(.snappy) { view in
+    .stickerEffect()
+    .stickerMotionEffect(.pointerHover(intensity: 0.5), animation: .bouncy)
+```
+
+Pass `nil` to disable the internal animation and take control externally with a scoped `.animation` view modifier.
+
+```swift
+Image(.stickerIcon)
+    .animation(.spring) { view in
         view
             .stickerEffect()
-            .stickerMotionEffect(.pointerHover(intensity: 0.5))
+            .stickerMotionEffect(.pointerHover(intensity: 0.5), animation: nil)
     }
 ```
+
+### Decoupling motion from the shader
+
+`.stickerMotionEffect()` applies the motion right where it is called and publishes it through the environment, driving every descendant `.stickerEffect()`. This lets you apply the shader to a subview — like the background of a card — while the motion moves the whole view.
+
+```swift
+CardView() // Contains an icon overlay.
+    .background {
+        RoundedRectangle(cornerRadius: 16)
+            .fill(.white)
+            .stickerEffect()
+    }
+    .stickerMotionEffect(.pointerHover)
+```
+
+The whole card rotates, including the icon, while only the background reacts to the motion with the foil effect.
 
 The following motion effects are available:
 
@@ -86,28 +110,33 @@ The following motion effects are available:
 | `.pointerHover(intensity:)`                             | Apply a 3D transform that looks at the pointer. The `intensity` parameter controls the strength of the effect.                                                                                                                           |
 | `.dragGesture(intensity:)`                              | Apply a 3D transform that follows drag gestures. The `intensity` parameter controls the strength of the effect.                                                                                                                          |
 | `.accelerometer(intensity:maxRotation:updateInterval:)` | Apply a 3D transform based on the device's accelerometer data. The `intensity` parameter controls the strength of the effect, while `maxRotation` defines the maximum rotation angle, applying a smooth rotation to the specified angle. |
-| `.identity`                                             | Remove the motion effect.                                                                                                                                                                                                                |
 
-You can create your own motion effects by implementing the `StickerMotionEffect` protocol.
+You can create your own motion effects by implementing the `StickerMotionEffect` protocol, which is a `ViewModifier`. A motion effect holds its own `StickerMotion` state, publishes it through the `\.stickerMotion` environment value so that descendant sticker effects can react to it, and wraps its state updates in `withAnimation` using the `\.stickerMotionAnimation` environment value set by `.stickerMotionEffect()`.
 
 ```swift
-struct MyMotionEffect: StickerMotionEffect {
-    let startDate: Date = .init()
+struct PressMotionEffect: StickerMotionEffect {
+    @State private var motion: StickerMotion = .init()
+
+    @Environment(\.stickerMotionAnimation) private var animation
 
     func body(content: Content) -> some View {
-        // Implement your motion effect here.
-        // This example applies a sine wave rotation to the content.
-        TimelineView(.animation) { context in
-            let elapsedTime = context.date.timeIntervalSince(startDate)
-            let rotation = sin(elapsedTime * 2) * 10
-            content
-                .rotationEffect(.degrees(rotation))
-        }
+        content
+            .rotation3DEffect(.degrees(motion.isActive ? 15 : 0), axis: (0, 1, 0))
+            .onLongPressGesture(minimumDuration: 0) {
+            } onPressingChanged: { isPressing in
+                withAnimation(animation) {
+                    motion = .init(
+                        isActive: isPressing,
+                        transform: isPressing ? .init(x: 40, y: 40) : .neutral
+                    )
+                }
+            }
+            .environment(\.stickerMotion, motion)
     }
 }
 
-extension StickerMotionEffect where Self == MyMotionEffect {
-    static var myMotionEffect: Self { .init() }
+extension StickerMotionEffect where Self == PressMotionEffect {
+    static var press: Self { .init() }
 }
 ```
 
