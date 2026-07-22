@@ -21,7 +21,7 @@ public struct DragStickerMotionEffect: StickerMotionEffect {
     /// - Returns: The content rotated by the current motion, publishing that motion to descendants.
     public func body(content: Content) -> some View {
         content
-            .stickerRotation3D(for: motion.transform, in: size, intensity: intensity)
+            .stickerRotation3D(for: motion, in: size, intensity: intensity)
             .gesture(
                 DragGesture()
                     .onChanged { gesture in
