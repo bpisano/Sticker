@@ -12,6 +12,7 @@ public struct DragStickerMotionEffect: StickerMotionEffect {
     let intensity: Double
 
     @State private var motion: StickerMotion = .inactive
+    @State private var size: CGSize = .zero
 
     @Environment(\.stickerMotionAnimation) private var animation
 
@@ -20,25 +21,27 @@ public struct DragStickerMotionEffect: StickerMotionEffect {
     /// - Returns: The content rotated by the current motion, publishing that motion to descendants.
     public func body(content: Content) -> some View {
         content
-            .withViewSize { view, size in
-                view
-                    .stickerRotation3D(for: motion.transform, in: size, intensity: intensity)
-                    .gesture(
-                        DragGesture()
-                            .onChanged { gesture in
-                                withAnimation(animation) {
-                                    motion = .active(
-                                        x: gesture.location.x - size.width / 2,
-                                        y: gesture.location.y - size.height / 2
-                                    )
-                                }
-                            }
-                            .onEnded { _ in
-                                withAnimation(animation) {
-                                    motion = .inactive
-                                }
-                            }
-                    )
+            .stickerRotation3D(for: motion.transform, in: size, intensity: intensity)
+            .gesture(
+                DragGesture()
+                    .onChanged { gesture in
+                        withAnimation(animation) {
+                            motion = .active(
+                                x: gesture.location.x - size.width / 2,
+                                y: gesture.location.y - size.height / 2
+                            )
+                        }
+                    }
+                    .onEnded { _ in
+                        withAnimation(animation) {
+                            motion = .inactive
+                        }
+                    }
+            )
+            .onGeometryChange(for: CGSize.self) { proxy in
+                proxy.size
+            } action: { newSize in
+                size = newSize
             }
             .environment(\.stickerMotion, motion)
     }

@@ -12,6 +12,7 @@ public struct PointerHoverStickerMotionEffect: StickerMotionEffect {
     let intensity: Double
 
     @State private var motion: StickerMotion = .inactive
+    @State private var size: CGSize = .zero
 
     @Environment(\.stickerMotionAnimation) private var animation
 
@@ -20,24 +21,26 @@ public struct PointerHoverStickerMotionEffect: StickerMotionEffect {
     /// - Returns: The content rotated by the current motion, publishing that motion to descendants.
     public func body(content: Content) -> some View {
         content
-            .withViewSize { view, size in
-                view
-                    .stickerRotation3D(for: motion.transform, in: size, intensity: intensity)
-                    .onContinuousHover { phase in
-                        switch phase {
-                        case let .active(location):
-                            withAnimation(animation) {
-                                motion = .active(
-                                    x: location.x - size.width / 2,
-                                    y: location.y - size.height / 2
-                                )
-                            }
-                        case .ended:
-                            withAnimation(animation) {
-                                motion = .inactive
-                            }
-                        }
+            .stickerRotation3D(for: motion.transform, in: size, intensity: intensity)
+            .onContinuousHover { phase in
+                switch phase {
+                case let .active(location):
+                    withAnimation(animation) {
+                        motion = .active(
+                            x: location.x - size.width / 2,
+                            y: location.y - size.height / 2
+                        )
                     }
+                case .ended:
+                    withAnimation(animation) {
+                        motion = .inactive
+                    }
+                }
+            }
+            .onGeometryChange(for: CGSize.self) { proxy in
+                proxy.size
+            } action: { newSize in
+                size = newSize
             }
             .environment(\.stickerMotion, motion)
     }

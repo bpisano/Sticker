@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  WithAccelerometerViewModifier.swift
 //  Sticker
 //
 //  Created by Benjamin Pisano on 15/11/2024.
@@ -9,17 +9,16 @@
 import SwiftUI
 import CoreMotion
 
-private struct WithAccelerometerViewModifier<ModifiedContent: View>: ViewModifier {
+private struct WithAccelerometerViewModifier: ViewModifier {
     let updateInterval: TimeInterval
-    let makeView: (AnyView, AccelerometerAttitude) -> ModifiedContent
+    let onUpdate: (AccelerometerAttitude) -> Void
 
     private let motionManager = CMMotionManager()
 
-    @State private var attitude: AccelerometerAttitude = .init()
     @State private var referenceAttitude: AccelerometerAttitude?
 
     func body(content: Content) -> some View {
-        makeView(AnyView(content), attitude)
+        content
             .onAppear {
                 startMotionUpdates()
             }
@@ -44,7 +43,7 @@ private struct WithAccelerometerViewModifier<ModifiedContent: View>: ViewModifie
                     currentAttitude = currentAttitude - referenceAttitude
                 }
 
-                attitude = currentAttitude
+                onUpdate(currentAttitude)
             }
         }
     }
@@ -55,14 +54,14 @@ private struct WithAccelerometerViewModifier<ModifiedContent: View>: ViewModifie
 }
 
 extension View {
-    func withAccelerometer<ModifiedContent: View>(
+    func onAccelerometerUpdate(
         updateInterval: TimeInterval,
-        @ViewBuilder _ makeView: @escaping (_ view: AnyView, _ attitude: AccelerometerAttitude) -> ModifiedContent
+        _ onUpdate: @escaping (_ attitude: AccelerometerAttitude) -> Void
     ) -> some View {
         modifier(
             WithAccelerometerViewModifier(
                 updateInterval: updateInterval,
-                makeView: makeView
+                onUpdate: onUpdate
             )
         )
     }
