@@ -9,10 +9,9 @@
 import SwiftUI
 import CoreMotion
 
-/// A motion effect that rotates its content with the device attitude.
+/// A motion effect that moves its content with the device attitude.
 public struct AccelerometerStickerMotionEffect: StickerMotionEffect {
-    let intensity: Double
-    let maxRotation: Angle
+    let behavior: AccelerometerBehavior
     let updateInterval: TimeInterval
 
     @State private var rotation: Rotation?
@@ -20,13 +19,13 @@ public struct AccelerometerStickerMotionEffect: StickerMotionEffect {
 
     @Environment(\.stickerMotionAnimation) private var animation
 
-    /// Rotates the content with the device attitude and publishes the motion to descendants.
+    /// Moves the content with the device attitude and publishes the motion to descendants.
     /// - Parameter content: The view the effect modifies.
-    /// - Returns: The content rotated by the current motion, publishing that motion to descendants.
+    /// - Returns: The content moved by the current motion, publishing that motion to descendants.
     public func body(content: Content) -> some View {
         content
-            .rotation3DEffect(rotation?.x ?? .zero, axis: (0, 1, 0))
-            .rotation3DEffect(rotation?.y ?? .zero, axis: (-1, 0, 0))
+            .rotation3DEffect(displayedRotation.x, axis: (0, 1, 0))
+            .rotation3DEffect(displayedRotation.y, axis: (-1, 0, 0))
             .onAccelerometerUpdate(updateInterval: updateInterval) { attitude in
                 withAnimation(animation) {
                     rotation = .init(
@@ -41,6 +40,33 @@ public struct AccelerometerStickerMotionEffect: StickerMotionEffect {
                 size = newSize
             }
             .environment(\.stickerMotion, motion)
+    }
+
+    private var displayedRotation: Rotation {
+        switch behavior {
+        case .identity:
+            .init(x: .zero, y: .zero)
+        case .rotation:
+            rotation ?? .init(x: .zero, y: .zero)
+        }
+    }
+
+    private var intensity: Double {
+        switch behavior {
+        case .identity:
+            1
+        case let .rotation(intensity, _):
+            intensity
+        }
+    }
+
+    private var maxRotation: Angle {
+        switch behavior {
+        case .identity:
+            .degrees(90)
+        case let .rotation(_, maxRotation):
+            maxRotation
+        }
     }
 
     private var motion: StickerMotion {
@@ -72,18 +98,15 @@ public extension StickerMotionEffect where Self == AccelerometerStickerMotionEff
 
     /// A motion effect that follows the device attitude.
     /// - Parameters:
-    ///   - intensity: The strength of the rotation applied to the device tilt.
-    ///   - maxRotation: The angle the rotation asymptotically approaches as the tilt grows.
+    ///   - behavior: The way the effect applies the device attitude to its content.
     ///   - updateInterval: The interval at which the device motion is sampled.
     /// - Returns: An accelerometer motion effect.
     static func accelerometer(
-        intensity: Double = 1,
-        maxRotation: Angle = .degrees(90),
+        _ behavior: AccelerometerBehavior = .rotation,
         updateInterval: TimeInterval = 0.02
     ) -> Self {
         .init(
-            intensity: intensity,
-            maxRotation: maxRotation,
+            behavior: behavior,
             updateInterval: updateInterval
         )
     }
