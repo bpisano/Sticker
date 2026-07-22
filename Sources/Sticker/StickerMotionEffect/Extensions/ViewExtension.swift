@@ -13,8 +13,8 @@ extension View {
         in size: CGSize,
         intensity: Double
     ) -> some View {
-        let xRotation: Double = (transform.x / size.width) * intensity
-        let yRotation: Double = (transform.y / size.height) * intensity
+        let xRotation: Double = size.width > 0 ? (transform.x / size.width) * intensity : .zero
+        let yRotation: Double = size.height > 0 ? (transform.y / size.height) * intensity : .zero
         return rotation3DEffect(.radians(xRotation), axis: (0, 1, 0))
             .rotation3DEffect(.radians(yRotation), axis: (-1, 0, 0))
     }
