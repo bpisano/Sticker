@@ -16,6 +16,11 @@ let package = Package(
         ),
     ],
     targets: [
-        .target(name: "Sticker"),
+        .target(
+            name: "Sticker",
+            resources: [
+                .process("Resources")
+            ]
+        ),
     ]
 )

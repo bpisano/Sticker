@@ -19,6 +19,7 @@ private struct StickerEffectViewModifier: ViewModifier {
     @Environment(\.stickerNoiseIntensity) private var stickerNoiseIntensity
     @Environment(\.stickerLightIntensity) private var stickerLightIntensity
     @Environment(\.stickerPattern) private var stickerPattern
+    @Environment(\.stickerTint) private var stickerTint
 
     func body(content: Content) -> some View {
         content
@@ -40,7 +41,7 @@ private struct StickerEffectViewModifier: ViewModifier {
                 [
                     motion, stickerScale, stickerColorIntensity, stickerContrast, stickerBlend,
                     stickerCheckerScale, stickerCheckerIntensity, stickerNoiseScale,
-                    stickerNoiseIntensity, stickerPattern
+                    stickerNoiseIntensity, stickerPattern, stickerTint
                 ] view, proxy in
                 view
                     .colorEffect(
@@ -56,7 +57,8 @@ private struct StickerEffectViewModifier: ViewModifier {
                             checkerIntensity: stickerCheckerIntensity,
                             noiseScale: stickerNoiseScale,
                             noiseIntensity: stickerNoiseIntensity,
-                            patternType: stickerPattern
+                            patternType: stickerPattern,
+                            tint: stickerTint
                         )
                     )
             }
@@ -101,6 +103,42 @@ public extension View {
     .stickerMotionEffect(.dragGesture)
     .shadow(radius: 20)
     .padding()
+}
+
+#Preview("Tinted Pink") {
+    VStack(spacing: 20) {
+        Image(systemName: "applelogo")
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(height: 100)
+            .foregroundStyle(.white)
+        Text("Sticker")
+            .font(.title.bold())
+            .foregroundStyle(.black)
+    }
+    .padding(40)
+    .background {
+        RoundedRectangle(cornerRadius: 24)
+            .fill(.white)
+            .stickerEffect()
+            .stickerTint(.pink)
+    }
+    .stickerMotionEffect(.dragGesture)
+    .shadow(radius: 20)
+    .padding()
+}
+
+#Preview("Tinted Gold") {
+    Image(systemName: "applelogo")
+        .resizable()
+        .aspectRatio(contentMode: .fit)
+        .frame(height: 100)
+        .foregroundStyle(.white)
+        .stickerEffect()
+        .stickerTint(.yellow)
+        .stickerMotionEffect(.dragGesture)
+        .shadow(radius: 20)
+        .padding()
 }
 
 #Preview("Simple") {

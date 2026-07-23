@@ -110,7 +110,8 @@ float stickerPattern(int option, float2 uv, float scale) {
                             float checkerIntensity,
                             float noiseScale,
                             float noiseIntensity,
-                            float patternType
+                            float patternType,
+                            half4 tint
 ) {
     // Calculate aspect ratio (width / height)
     float aspectRatio = size.x / size.y;
@@ -132,9 +133,17 @@ float stickerPattern(int option, float2 uv, float scale) {
     half g = half(contrast + 0.25 * cos(uv.y * 10.0 + gradientNoise));
     half b = half(contrast + 0.25 * sin((uv.x + uv.y) * 10.0 - gradientNoise));
 
-    half4 foilColor = half4(r, g, b, 1.0);
-    half4 mixedFoilColor = lightnessMix(color, foilColor, intensity, 0.3);
+    half4 rainbow = half4(r, g, b, 1.0);
 
+    // Soft satin folds for the tinted foil: two octaves of smooth value noise
+    float folds = noisePattern(uv * 6.0) * 0.65 + noisePattern(uv * 14.0) * 0.35;
+    float sheen = smoothstep(0.2, 0.95, folds);
+
+    half3 tintBase = tint.rgb / max(tint.a, half(1e-4));
+    half3 tintedRgb = mix(tintBase * 0.85, half3(1.0), half(sheen * 0.85));
+    half4 tinted = half4(tintedRgb, 1.0);
+    half4 foilColor = mix(rainbow, tinted, tint.a);
+    half4 mixedFoilColor = lightnessMix(color, foilColor, intensity, 0.3);
     half4 checkerFoil = increaseContrast(mixedFoilColor, pattern, checkerIntensity);
     half4 noiseCheckerFoil = increaseContrast(checkerFoil, noise, noiseIntensity);
 

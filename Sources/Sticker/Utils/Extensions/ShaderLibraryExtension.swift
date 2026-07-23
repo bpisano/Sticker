@@ -21,7 +21,8 @@ extension ShaderLibrary {
         checkerIntensity: Float = 1.2,
         noiseScale: Float = 100,
         noiseIntensity: Float = 1.2,
-        patternType: StickerPatternType = .diamond
+        patternType: StickerPatternType = .diamond,
+        tint: Color? = nil
     ) -> Shader {
         moduleLibrary.foil(
             .float2(offset),
@@ -34,7 +35,8 @@ extension ShaderLibrary {
             .float(checkerIntensity),
             .float(noiseScale),
             .float(noiseIntensity),
-            .float(Float(patternType.rawValue))
+            .float(Float(patternType.rawValue)),
+            .color(tint ?? .clear)
         )
     }
 

@@ -18,6 +18,7 @@ extension EnvironmentValues {
     @Entry var stickerNoiseIntensity: Float = 1.2
     @Entry var stickerLightIntensity: Float = 0.3
     @Entry var stickerPattern: StickerPatternType = .diamond
+    @Entry var stickerTint: Color? = nil
 }
 
 extension View {
@@ -59,5 +60,17 @@ extension View {
     
     public func stickerPattern(_ type: StickerPatternType) -> some View {
         environment(\.stickerPattern, type)
+    }
+
+    /// Locks the sticker foil to a metallic monochrome shimmer of the given color
+    /// instead of the default rainbow gradient.
+    ///
+    /// The color's alpha controls the blend with the rainbow foil:
+    /// `.stickerTint(.pink.opacity(0.5))` renders half rainbow, half pink.
+    /// - Parameter color: The tint color for the foil, or `nil` (the default) to
+    ///   keep the rainbow foil.
+    /// - Returns: A view whose sticker foil shimmers in the given color.
+    public func stickerTint(_ color: Color?) -> some View {
+        environment(\.stickerTint, color)
     }
 }
